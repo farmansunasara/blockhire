@@ -1,0 +1,17 @@
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.3
+Pillow==10.0.1
+python-decouple==3.8
+dj-database-url==2.1.0
+# psycopg2-binary==2.9.7  # For PostgreSQL - install separately if needed
+django-storages==1.14.1
+boto3==1.28.85
+celery==5.3.4
+redis==5.0.1
+django-extensions==3.2.3
+django-cleanup==8.0.0
+cryptography==41.0.7
+PyJWT==2.8.0
+django-ratelimit==4.1.0

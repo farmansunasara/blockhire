@@ -1,0 +1,203 @@
+"""
+JWT Authentication for BlockHire API.
+"""
+import jwt
+from datetime import datetime, timedelta
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+from .models import JWTToken
+
+User = get_user_model()
+
+
+class JWTAuthentication(BaseAuthentication):
+    """
+    Custom JWT authentication class.
+    """
+    
+    def authenticate(self, request):
+        """
+        Authenticate the request using JWT token.
+        """
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return None
+            
+        token = auth_header.split(' ')[1]
+        
+        try:
+            payload = jwt.decode(
+                token, 
+                settings.JWT_SECRET_KEY, 
+                algorithms=['HS256']
+            )
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                raise AuthenticationFailed('Invalid token payload')
+                
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                raise AuthenticationFailed('User not found')
+                
+            # Check if token is revoked
+            if JWTToken.objects.filter(
+                user=user, 
+                token=token, 
+                is_revoked=True
+            ).exists():
+                raise AuthenticationFailed('Token has been revoked')
+                
+            return (user, token)
+            
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Token has expired')
+        except jwt.InvalidTokenError:
+            raise AuthenticationFailed('Invalid token')
+        except Exception as e:
+            raise AuthenticationFailed(f'Authentication failed: {str(e)}')
+
+
+def generate_tokens(user):
+    """
+    Generate access and refresh tokens for a user.
+    """
+    now = datetime.utcnow()
+    
+    # Access token payload
+    access_payload = {
+        'user_id': user.id,
+        'email': user.email,
+        'emp_id': user.emp_id,
+        'user_hash': user.user_hash,
+        'type': 'access',
+        'iat': now,
+        'exp': now + timedelta(seconds=settings.JWT_ACCESS_TOKEN_LIFETIME)
+    }
+    
+    # Refresh token payload
+    refresh_payload = {
+        'user_id': user.id,
+        'type': 'refresh',
+        'iat': now,
+        'exp': now + timedelta(seconds=settings.JWT_REFRESH_TOKEN_LIFETIME)
+    }
+    
+    # Generate tokens
+    access_token = jwt.encode(
+        access_payload, 
+        settings.JWT_SECRET_KEY, 
+        algorithm='HS256'
+    )
+    
+    refresh_token = jwt.encode(
+        refresh_payload, 
+        settings.JWT_SECRET_KEY, 
+        algorithm='HS256'
+    )
+    
+    # Store refresh token in database
+    JWTToken.objects.create(
+        user=user,
+        token=refresh_token,
+        expires_at=now + timedelta(seconds=settings.JWT_REFRESH_TOKEN_LIFETIME)
+    )
+    
+    return {
+        'access': access_token,
+        'refresh': refresh_token,
+        'access_expires_in': settings.JWT_ACCESS_TOKEN_LIFETIME,
+        'refresh_expires_in': settings.JWT_REFRESH_TOKEN_LIFETIME
+    }
+
+
+def refresh_access_token(refresh_token):
+    """
+    Generate new access token using refresh token.
+    """
+    try:
+        payload = jwt.decode(
+            refresh_token, 
+            settings.JWT_SECRET_KEY, 
+            algorithms=['HS256']
+        )
+        
+        if payload.get('type') != 'refresh':
+            raise AuthenticationFailed('Invalid token type')
+            
+        user_id = payload.get('user_id')
+        if not user_id:
+            raise AuthenticationFailed('Invalid token payload')
+            
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise AuthenticationFailed('User not found')
+            
+        # Check if refresh token exists and is not revoked
+        try:
+            token_obj = JWTToken.objects.get(
+                user=user, 
+                token=refresh_token, 
+                is_revoked=False
+            )
+            
+            if token_obj.is_expired:
+                raise AuthenticationFailed('Refresh token has expired')
+                
+        except JWTToken.DoesNotExist:
+            raise AuthenticationFailed('Invalid refresh token')
+            
+        # Generate new access token
+        now = datetime.utcnow()
+        access_payload = {
+            'user_id': user.id,
+            'email': user.email,
+            'emp_id': user.emp_id,
+            'user_hash': user.user_hash,
+            'type': 'access',
+            'iat': now,
+            'exp': now + timedelta(seconds=settings.JWT_ACCESS_TOKEN_LIFETIME)
+        }
+        
+        access_token = jwt.encode(
+            access_payload, 
+            settings.JWT_SECRET_KEY, 
+            algorithm='HS256'
+        )
+        
+        return {
+            'access': access_token,
+            'access_expires_in': settings.JWT_ACCESS_TOKEN_LIFETIME
+        }
+        
+    except jwt.ExpiredSignatureError:
+        raise AuthenticationFailed('Refresh token has expired')
+    except jwt.InvalidTokenError:
+        raise AuthenticationFailed('Invalid refresh token')
+    except Exception as e:
+        raise AuthenticationFailed(f'Token refresh failed: {str(e)}')
+
+
+def revoke_token(token):
+    """
+    Revoke a JWT token.
+    """
+    try:
+        token_obj = JWTToken.objects.get(token=token)
+        token_obj.is_revoked = True
+        token_obj.save()
+        return True
+    except JWTToken.DoesNotExist:
+        return False
+
+
+def revoke_all_user_tokens(user):
+    """
+    Revoke all tokens for a user.
+    """
+    JWTToken.objects.filter(user=user, is_revoked=False).update(is_revoked=True)

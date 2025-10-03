@@ -1,0 +1,40 @@
+# Root .gitignore
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VSCode settings
+.vscode/
+
+# Coverage reports
+coverage/
+*.cover
+*.py,cover
+
+# Misc
+*.pem
+*.sqlite3
+*.db
+*.sqlite
+
+# Build directories
+build/
+dist/
