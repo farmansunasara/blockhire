@@ -4,9 +4,12 @@ Account-related API views.
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from .permissions import AllowAnyPermission
 from rest_framework.response import Response
 from django.contrib.auth import logout
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import User, UserProfile
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, UserSerializer,
@@ -16,13 +19,31 @@ from .serializers import (
 from .authentication import generate_tokens, revoke_all_user_tokens
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
+def test_endpoint(request):
+    """
+    Test endpoint to verify API is working.
+    """
+    return Response({
+        'success': True,
+        'message': 'API is working!',
+        'method': request.method,
+        'data': request.data if request.method == 'POST' else None,
+        'user': str(request.user) if hasattr(request, 'user') else 'Anonymous',
+        'authenticated': request.user.is_authenticated if hasattr(request, 'user') else False
+    }, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAnyPermission])
 def register(request):
     """
     Register a new user.
     """
     print(f"Registration request data: {request.data}")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
     serializer = UserRegistrationSerializer(data=request.data)
     
     if serializer.is_valid():
@@ -59,11 +80,14 @@ def register(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([AllowAnyPermission])
 def login(request):
     """
     Authenticate user and return tokens.
     """
+    print(f"Login request data: {request.data}")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
     serializer = UserLoginSerializer(data=request.data)
     
     if serializer.is_valid():

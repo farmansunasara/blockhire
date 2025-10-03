@@ -22,11 +22,14 @@ class JWTAuthentication(BaseAuthentication):
         Authenticate the request using JWT token.
         """
         auth_header = request.META.get('HTTP_AUTHORIZATION')
+        print(f"JWT Auth - Header: {auth_header}")
         
         if not auth_header or not auth_header.startswith('Bearer '):
+            print("JWT Auth - No valid auth header")
             return None
             
         token = auth_header.split(' ')[1]
+        print(f"JWT Auth - Token: {token[:20]}...")
         
         try:
             payload = jwt.decode(
@@ -34,14 +37,18 @@ class JWTAuthentication(BaseAuthentication):
                 settings.JWT_SECRET_KEY, 
                 algorithms=['HS256']
             )
+            print(f"JWT Auth - Payload: {payload}")
             
             user_id = payload.get('user_id')
             if not user_id:
+                print("JWT Auth - No user_id in payload")
                 raise AuthenticationFailed('Invalid token payload')
                 
             try:
                 user = User.objects.get(id=user_id)
+                print(f"JWT Auth - User found: {user.email}")
             except User.DoesNotExist:
+                print("JWT Auth - User not found")
                 raise AuthenticationFailed('User not found')
                 
             # Check if token is revoked
@@ -50,15 +57,20 @@ class JWTAuthentication(BaseAuthentication):
                 token=token, 
                 is_revoked=True
             ).exists():
+                print("JWT Auth - Token revoked")
                 raise AuthenticationFailed('Token has been revoked')
                 
+            print("JWT Auth - Authentication successful")
             return (user, token)
             
         except jwt.ExpiredSignatureError:
+            print("JWT Auth - Token expired")
             raise AuthenticationFailed('Token has expired')
         except jwt.InvalidTokenError:
+            print("JWT Auth - Invalid token")
             raise AuthenticationFailed('Invalid token')
         except Exception as e:
+            print(f"JWT Auth - Exception: {str(e)}")
             raise AuthenticationFailed(f'Authentication failed: {str(e)}')
 
 

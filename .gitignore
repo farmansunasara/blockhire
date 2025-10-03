@@ -1,40 +1,48 @@
-# Root .gitignore
+# Dependencies
+node_modules/
+backend/venv/
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/migrations/__pycache__/
 
-# OS generated files
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Database
+backend/db.sqlite3
+backend/*.db
+
+# Logs
+backend/logs/
+*.log
+
+# Static files
+backend/staticfiles/
+backend/media/
+
+# Build outputs
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
 
-# Logs
-logs/
-*.log
+# Test files
+backend/test_*.py
+backend/simple_test.py
+frontend/test-*.html
 
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Node modules
-node_modules/
-
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-
-# VSCode settings
-.vscode/
-
-# Coverage reports
-coverage/
-*.cover
-*.py,cover
-
-# Misc
-*.pem
-*.sqlite3
-*.db
-*.sqlite
-
-# Build directories
-build/
-dist/
+# Temporary files
+*.tmp
+*.temp

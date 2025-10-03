@@ -12,7 +12,7 @@ import {
 } from '@/types/api'
 
 class APIService {
-  private baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+  private baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
   
   private async request<T>(
     endpoint: string, 
@@ -23,6 +23,7 @@ class APIService {
       
       // Get access token from localStorage
       const accessToken = localStorage.getItem('accessToken')
+      console.log('API Request:', { url, accessToken: accessToken ? 'Present' : 'Missing' })
       
       const response = await fetch(url, {
         headers: {
@@ -36,7 +37,13 @@ class APIService {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Request failed')
+        console.error('API Response Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+          url: url
+        })
+        throw new Error(data.error || data.message || `Request failed with status ${response.status}`)
       }
 
       return data

@@ -7,6 +7,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useRouter } from "next/navigation"
 import { useAuth } from "../../../contexts/AuthContext"
 import { ProfileFormData, DocumentRecord } from "@/types/api"
 import { apiService } from "@/services/api"
@@ -31,6 +32,7 @@ const profileSchema = z.object({
 })
 
 export default function ProfileEditPage() {
+  const router = useRouter()
   const { userProfile, credentials, refreshProfile } = useAuth()
   const [step, setStep] = useState<"personal" | "contact" | "employment">("personal")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -110,6 +112,11 @@ export default function ProfileEditPage() {
         } catch (refreshError) {
           console.warn("Profile refresh failed, but update was successful:", refreshError)
         }
+        
+        // Navigate to profile view after successful save
+        setTimeout(() => {
+          router.push("/profile/info")
+        }, 1500) // Give user time to see success message
       } else {
         console.log("Profile update failed:", response)
         throw new Error(response.error || "Failed to update profile")
@@ -152,11 +159,15 @@ export default function ProfileEditPage() {
             doc.docHash === documentData.docHash ? documentData : doc
           )
           setDocumentHistory(updatedHistory)
+          // Update localStorage
+          localStorage.setItem("documentHistory", JSON.stringify(updatedHistory))
           setMessage({ type: "success", text: "Document updated successfully!" })
         } else {
           // Add new document to history
           const newHistory = [...documentHistory, documentData]
           setDocumentHistory(newHistory)
+          // Update localStorage
+          localStorage.setItem("documentHistory", JSON.stringify(newHistory))
           setMessage({ type: "success", text: "Document uploaded successfully!" })
         }
       } else {
@@ -493,6 +504,48 @@ export default function ProfileEditPage() {
                         Computing SHA-256 hash...
                       </div>
                     )}
+
+                    {/* Document History Display */}
+                    <div className="mt-6">
+                      <h4 className="text-md font-medium mb-3 text-gray-800">Uploaded Documents</h4>
+                      {documentHistory.length > 0 ? (
+                        <div className="space-y-3">
+                          {documentHistory.map((doc, index) => (
+                            <div key={doc.docHash || index} className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <FileText className="h-4 w-4 text-blue-600 mr-2" />
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-800">{doc.fileName}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : 'Unknown size'} • 
+                                      {doc.fileType?.toUpperCase() || 'PDF'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center">
+                                  {doc.isOriginal && (
+                                    <Badge variant="default" className="text-xs mr-2">Original</Badge>
+                                  )}
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                </div>
+                              </div>
+                              <div className="mt-2">
+                                <p className="text-xs text-gray-600 font-mono break-all">
+                                  Hash: {doc.docHash}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                          <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">No documents uploaded yet</p>
+                          <p className="text-xs text-gray-500 mt-1">Upload a PDF document above to get started</p>
+                        </div>
+                      )}
+                    </div>
 
                     {localStorage.getItem("documentHash") && (
                       <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
