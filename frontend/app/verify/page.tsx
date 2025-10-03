@@ -8,6 +8,7 @@ import ProtectedRoute from "../../components/ProtectedRoute"
 import EmployeeLookup from "../../components/EmployeeLookup"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { VerificationResult } from "@/types/api"
+import { FormValidator, validationRules } from "../../lib/validation"
 
 export default function VerifyPage() {
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)

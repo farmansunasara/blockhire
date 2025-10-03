@@ -6,6 +6,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "../contexts/AuthContext"
 import ProfileDropdown from "./ProfileDropdown"
+import Breadcrumbs from "./Breadcrumbs"
+import NavigationProgress from "./NavigationProgress"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -65,7 +67,13 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main style={{ flex: 1 }}>{children}</main>
+      <main style={{ flex: 1 }}>
+        <NavigationProgress />
+        <div className="container" style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
+          <Breadcrumbs />
+        </div>
+        {children}
+      </main>
 
       <footer className="footer">
         <div className="container">

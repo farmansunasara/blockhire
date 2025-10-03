@@ -18,7 +18,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, AlertCircle, Upload, FileText, Hash } from "lucide-react"
+import { CheckCircle, AlertCircle, Upload, FileText, Hash, Eye, EyeOff } from "lucide-react"
+import { validateFile } from "../../../lib/validation"
 
 // Validation schema
 const profileSchema = z.object({
@@ -147,8 +148,10 @@ export default function ProfileEditPage() {
     const file = e.target.files?.[0]
     if (!file) return
     
-    if (file.type !== "application/pdf") {
-      setMessage({ type: "error", text: "Please select a PDF file" })
+    // Enhanced file validation
+    const fileError = validateFile(file)
+    if (fileError) {
+      setMessage({ type: "error", text: fileError })
       return
     }
     

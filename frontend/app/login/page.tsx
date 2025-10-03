@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../../contexts/AuthContext"
 import Layout from "../../components/Layout"
+import { FormValidator, validationRules } from "../../lib/validation"
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login")
@@ -16,8 +17,23 @@ export default function LoginPage() {
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
   const { user, login, register } = useAuth()
+  
+  // Initialize validator
+  const validator = new FormValidator()
+  validator.addRule('email', validationRules.email)
+  validator.addRule('password', validationRules.password)
+  validator.addRule('confirmPassword', {
+    ...validationRules.confirmPassword,
+    custom: (value: string) => {
+      if (activeTab === 'register' && value !== formData.password) {
+        return 'Passwords do not match'
+      }
+      return null
+    }
+  })
 
   useEffect(() => {
     if (user) {
@@ -29,14 +45,18 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setMessage("")
+    setErrors({})
+
+    // Validate form
+    const validation = validator.validate(formData)
+    if (!validation.isValid) {
+      setErrors(validation.errors)
+      setLoading(false)
+      return
+    }
 
     try {
       if (activeTab === "register") {
-        if (formData.password !== formData.confirmPassword) {
-          setMessage("Passwords do not match")
-          setLoading(false)
-          return
-        }
         await register(formData.email, formData.password)
         setMessage("Registration successful!")
       } else {
@@ -108,7 +128,9 @@ export default function LoginPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
+                className={errors.email ? 'error' : ''}
               />
+              {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
 
             <div className="form-group">
@@ -120,7 +142,9 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={handleInputChange}
                 required
+                className={errors.password ? 'error' : ''}
               />
+              {errors.password && <span className="error-message">{errors.password}</span>}
             </div>
 
             {activeTab === "register" && (
@@ -133,7 +157,9 @@ export default function LoginPage() {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   required
+                  className={errors.confirmPassword ? 'error' : ''}
                 />
+                {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
               </div>
             )}
 
