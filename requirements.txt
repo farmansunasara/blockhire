@@ -16,7 +16,7 @@ Pillow==10.4.0
 python-decouple==3.8
 
 # Database
-psycopg[binary]==3.1.18
+psycopg[binary]==3.2.10
 dj-database-url==2.1.0
 
 # Static Files
