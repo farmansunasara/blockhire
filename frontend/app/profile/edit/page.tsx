@@ -71,10 +71,28 @@ export default function ProfileEditPage() {
       })
     }
 
-    // Load document history
-    const savedDocs = localStorage.getItem("documentHistory")
-    if (savedDocs) {
-      setDocumentHistory(JSON.parse(savedDocs))
+    // Load document history from API instead of localStorage
+    const loadDocumentHistory = async () => {
+      try {
+        const response = await apiService.getDocumentHistory()
+        if (response.success && response.data) {
+          console.log("Loaded document history from API:", response.data)
+          setDocumentHistory(response.data)
+        } else {
+          console.log("No document history found or API error")
+          setDocumentHistory([])
+        }
+      } catch (error) {
+        console.error("Error loading document history:", error)
+        setDocumentHistory([])
+      }
+    }
+    
+    // Only fetch if user is authenticated
+    if (userProfile) {
+      loadDocumentHistory()
+    } else {
+      setDocumentHistory([])
     }
   }, [setValue, userProfile])
 
@@ -159,15 +177,11 @@ export default function ProfileEditPage() {
             doc.docHash === documentData.docHash ? documentData : doc
           )
           setDocumentHistory(updatedHistory)
-          // Update localStorage
-          localStorage.setItem("documentHistory", JSON.stringify(updatedHistory))
           setMessage({ type: "success", text: "Document updated successfully!" })
         } else {
           // Add new document to history
           const newHistory = [...documentHistory, documentData]
           setDocumentHistory(newHistory)
-          // Update localStorage
-          localStorage.setItem("documentHistory", JSON.stringify(newHistory))
           setMessage({ type: "success", text: "Document uploaded successfully!" })
         }
       } else {

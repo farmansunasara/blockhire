@@ -64,12 +64,30 @@ export default function ProfileInfoPage() {
       }
     }
     
-    // Load document history
-    const savedDocs = localStorage.getItem("documentHistory")
-    if (savedDocs) {
-      setDocuments(JSON.parse(savedDocs))
+    // Load document history from API instead of localStorage
+    const loadDocumentHistory = async () => {
+      try {
+        const response = await apiService.getDocumentHistory()
+        if (response.success && response.data) {
+          console.log("Loaded document history from API:", response.data)
+          setDocuments(response.data)
+        } else {
+          console.log("No document history found or API error")
+          setDocuments([])
+        }
+      } catch (error) {
+        console.error("Error loading document history:", error)
+        setDocuments([])
+      }
     }
-  }, [userProfile, loading])
+    
+    // Only fetch if user is authenticated
+    if (user) {
+      loadDocumentHistory()
+    } else {
+      setDocuments([])
+    }
+  }, [userProfile, loading, user])
 
   const copyHash = async () => {
     const documentHash = localStorage.getItem("documentHash")
