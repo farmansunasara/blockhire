@@ -33,7 +33,7 @@ services:
     name: blockhire-frontend
     env: node
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
+    buildCommand: chmod +x frontend-build.sh && ./frontend-build.sh
     startCommand: cd frontend && npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
