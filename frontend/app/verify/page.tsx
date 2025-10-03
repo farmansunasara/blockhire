@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Layout from "../../components/Layout"
+import ProtectedRoute from "../../components/ProtectedRoute"
 import EmployeeLookup from "../../components/EmployeeLookup"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { VerificationResult } from "@/types/api"
@@ -25,7 +26,8 @@ export default function VerifyPage() {
   }
 
   return (
-    <Layout>
+    <ProtectedRoute>
+      <Layout>
         <div className="container max-w-4xl mx-auto py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">Verify Employment Record</h1>
@@ -145,5 +147,6 @@ export default function VerifyPage() {
           </div>
         </div>
       </Layout>
+    </ProtectedRoute>
   )
 }

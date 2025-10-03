@@ -33,7 +33,7 @@ const profileSchema = z.object({
 
 export default function ProfileEditPage() {
   const router = useRouter()
-  const { userProfile, credentials, refreshProfile } = useAuth()
+  const { user, userProfile, credentials, refreshProfile } = useAuth()
   const [step, setStep] = useState<"personal" | "contact" | "employment">("personal")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isHashing, setIsHashing] = useState(false)
@@ -71,15 +71,15 @@ export default function ProfileEditPage() {
       })
     }
 
-    // Load document history from API instead of localStorage
+    // Load document history from API (not localStorage to prevent data leakage)
     const loadDocumentHistory = async () => {
       try {
         const response = await apiService.getDocumentHistory()
         if (response.success && response.data) {
-          console.log("Loaded document history from API:", response.data)
+          console.log("Loading documents from API:", response.data)
           setDocumentHistory(response.data)
         } else {
-          console.log("No document history found or API error")
+          console.log("No documents found or API error:", response.error)
           setDocumentHistory([])
         }
       } catch (error) {
@@ -88,13 +88,11 @@ export default function ProfileEditPage() {
       }
     }
     
-    // Only fetch if user is authenticated
-    if (userProfile) {
+    // Only load documents if user is authenticated
+    if (user) {
       loadDocumentHistory()
-    } else {
-      setDocumentHistory([])
     }
-  }, [setValue, userProfile])
+  }, [setValue, userProfile, user])
 
   const onNext = () => {
     if (step === "personal") {
@@ -170,7 +168,7 @@ export default function ProfileEditPage() {
         // Check if this is an update or new upload
         const isUpdate = documentHistory.some(doc => doc.docHash === documentData.docHash)
         
-        // Update document history
+        // Update document history (no localStorage to prevent data leakage)
         if (isUpdate) {
           // Replace existing document in history
           const updatedHistory = documentHistory.map(doc => 

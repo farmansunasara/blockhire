@@ -64,15 +64,15 @@ export default function ProfileInfoPage() {
       }
     }
     
-    // Load document history from API instead of localStorage
+    // Load document history from API (not localStorage to prevent data leakage)
     const loadDocumentHistory = async () => {
       try {
         const response = await apiService.getDocumentHistory()
         if (response.success && response.data) {
-          console.log("Loaded document history from API:", response.data)
+          console.log("Loading documents from API:", response.data)
           setDocuments(response.data)
         } else {
-          console.log("No document history found or API error")
+          console.log("No documents found or API error:", response.error)
           setDocuments([])
         }
       } catch (error) {
@@ -81,11 +81,9 @@ export default function ProfileInfoPage() {
       }
     }
     
-    // Only fetch if user is authenticated
-    if (user) {
+    // Only load documents if user is authenticated
+    if (user && !loading) {
       loadDocumentHistory()
-    } else {
-      setDocuments([])
     }
   }, [userProfile, loading, user])
 
