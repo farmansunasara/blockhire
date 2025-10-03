@@ -33,13 +33,8 @@ services:
     name: blockhire-frontend
     env: node
     plan: free
-    buildCommand: |
-      cd frontend
-      npm install
-      npm run build
-    startCommand: |
-      cd frontend
-      npm start
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://blockhire-backend.onrender.com/api
