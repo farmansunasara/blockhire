@@ -38,6 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [credentials, setCredentials] = useState<UserCredentials | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Utility function to clear all user data from localStorage
+  const clearAllUserData = () => {
+    localStorage.removeItem("userProfile")
+    localStorage.removeItem("profile")
+    localStorage.removeItem("documentHistory")
+    localStorage.removeItem("documentHash")
+    localStorage.removeItem("userHash")
+    localStorage.removeItem("empId")
+    localStorage.removeItem("userCredentials")
+  }
+
   const loadUserProfile = async (user: User) => {
     try {
       // Load from API
@@ -85,6 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      // Clear any existing data first to prevent data leakage
+      clearAllUserData()
+      
       const response = await apiService.login(email, password)
       
       if (response.success && response.data) {
@@ -120,6 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string) => {
     try {
+      // Clear any existing data first to prevent data leakage
+      clearAllUserData()
+      
       const response = await apiService.register({
         email,
         password,
@@ -164,12 +181,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
-      // Clear localStorage
+      // Clear ALL localStorage data to prevent data leakage between users
+      clearAllUserData()
       localStorage.removeItem("accessToken")
       localStorage.removeItem("refreshToken")
       localStorage.removeItem("demoUser")
-      localStorage.removeItem("userProfile")
-      localStorage.removeItem("userCredentials")
+      
+      // Clear all state
       setUser(null)
       setUserProfile(null)
       setCredentials(null)
