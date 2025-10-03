@@ -6,7 +6,6 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import FileExtensionValidator
 from django.conf import settings
-from .storage import DocumentStorage
 
 
 class DocumentRecord(models.Model):
@@ -21,15 +20,6 @@ class DocumentRecord(models.Model):
     is_original = models.BooleanField(default=False)
     storage_path = models.CharField(max_length=500)
     file_type = models.CharField(max_length=10, default='pdf')
-    
-    # S3 File field for cloud storage
-    file = models.FileField(
-        upload_to='documents/',
-        storage=DocumentStorage(),
-        blank=True,
-        null=True,
-        help_text="Uploaded document file"
-    )
     
     # Additional metadata
     upload_ip = models.GenericIPAddressField(blank=True, null=True)

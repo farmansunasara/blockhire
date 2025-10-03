@@ -68,7 +68,7 @@ class DocumentUploadSerializer(serializers.Serializer):
         existing_docs = DocumentRecord.objects.filter(user=user).count()
         is_first_document = existing_docs == 0
         
-        # Create document record with S3 file
+        # Create document record
         document = DocumentRecord.objects.create(
             user=user,
             doc_hash=doc_hash,
@@ -78,8 +78,7 @@ class DocumentUploadSerializer(serializers.Serializer):
             storage_path=f"documents/{user.emp_id}/{file.name}",
             file_type=file.name.split('.')[-1].lower(),
             upload_ip=self.context['request'].META.get('REMOTE_ADDR'),
-            user_agent=self.context['request'].META.get('HTTP_USER_AGENT'),
-            file=file  # This will automatically upload to S3
+            user_agent=self.context['request'].META.get('HTTP_USER_AGENT')
         )
         
         # Update user profile with document information
