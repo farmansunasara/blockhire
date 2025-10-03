@@ -198,7 +198,7 @@ JWT_REFRESH_TOKEN_LIFETIME = config('JWT_REFRESH_TOKEN_LIFETIME', default=86400,
 
 # File Upload Settings
 MAX_FILE_SIZE = config('MAX_FILE_SIZE', default=10485760, cast=int)  # 10MB
-ALLOWED_FILE_TYPES = config('ALLOWED_FILE_TYPES', default='pdf').split(',')
+ALLOWED_FILE_TYPES = config('ALLOWED_FILE_TYPES', default='pdf,jpg,jpeg,png,doc,docx').split(',')
 
 # AWS S3 Settings (Optional)
 USE_S3 = config('USE_S3', default=False, cast=bool)

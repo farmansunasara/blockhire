@@ -52,12 +52,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Check localStorage for existing user
+    // Check localStorage for existing user and tokens
     const demoUser = localStorage.getItem("demoUser")
+    const accessToken = localStorage.getItem("accessToken")
+    
     if (demoUser) {
       const user = JSON.parse(demoUser) as User
       setUser(user)
       loadUserProfile(user)
+    } else if (accessToken) {
+      // If we have a token but no demo user, try to load the profile
+      // This handles the case where the user logged in but the page was refreshed
+      apiService.getProfile().then(response => {
+        if (response.success && response.data) {
+          setUserProfile(response.data)
+          // Create a minimal user object
+          const user: User = {
+            email: response.data.email,
+            uid: response.data.id?.toString() || 'unknown'
+          }
+          setUser(user)
+        }
+      }).catch(error => {
+        console.error("Error loading profile from token:", error)
+        // Clear invalid tokens
+        localStorage.removeItem("accessToken")
+        localStorage.removeItem("refreshToken")
+      })
     }
     setLoading(false)
   }, [])

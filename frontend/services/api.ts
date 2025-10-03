@@ -104,11 +104,15 @@ class APIService {
     // Get access token for authentication
     const accessToken = localStorage.getItem('accessToken')
     
+    if (!accessToken) {
+      throw new Error('No access token found. Please login again.')
+    }
+    
     return this.request<DocumentRecord>('/documents/upload/', {
       method: 'POST',
       headers: {
         // Don't set Content-Type, let browser set it for FormData
-        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: formData,
     })
