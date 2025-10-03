@@ -28,4 +28,4 @@ gunicorn==21.2.0
 # API Features
 django-filter==23.3
 django-ratelimit==4.1.0
-django-cleanup==8.2.0
+django-cleanup==9.0.0
