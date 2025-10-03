@@ -54,14 +54,7 @@ export default function ProfileInfoPage() {
       console.log("Loading profile from AuthContext:", userProfile)
       setProfile(userProfile)
     } else {
-      // Try both localStorage keys for compatibility
-      const savedProfile = localStorage.getItem("userProfile") || localStorage.getItem("profile")
-      if (savedProfile) {
-        console.log("Loading profile from localStorage:", JSON.parse(savedProfile))
-        setProfile(JSON.parse(savedProfile))
-      } else {
-        console.log("No profile data found")
-      }
+      console.log("No profile data found in AuthContext")
     }
     
     // Load document history from API (not localStorage to prevent data leakage)
@@ -88,7 +81,7 @@ export default function ProfileInfoPage() {
   }, [userProfile, loading, user])
 
   const copyHash = async () => {
-    const documentHash = localStorage.getItem("documentHash")
+    const documentHash = userProfile?.docHash
     if (documentHash) {
       try {
         await navigator.clipboard.writeText(documentHash)
@@ -399,7 +392,7 @@ export default function ProfileInfoPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {localStorage.getItem("documentHash") ? (
+                  {userProfile?.docHash ? (
                     <div className="space-y-4">
                       <Alert className="border-green-200 bg-green-50">
                         <CheckCircle className="h-4 w-4 text-green-600" />
@@ -415,7 +408,7 @@ export default function ProfileInfoPage() {
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg border">
                           <code className="text-xs text-gray-700 break-all block font-mono">
-                            {localStorage.getItem("documentHash")}
+                            {userProfile?.docHash}
                           </code>
                         </div>
                         <Button

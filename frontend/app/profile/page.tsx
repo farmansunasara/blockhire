@@ -8,12 +8,9 @@ export default function ProfileIndexRedirect() {
   const router = useRouter()
 
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("profile") : null
-    if (saved) {
-      router.replace("/profile/info")
-    } else {
-      router.replace("/profile/edit")
-    }
+    // Always redirect to edit page to prevent localStorage-based routing
+    // The edit page will handle profile completion logic properly
+    router.replace("/profile/edit")
   }, [router])
 
   return (

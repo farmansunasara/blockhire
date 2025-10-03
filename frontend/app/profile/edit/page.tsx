@@ -59,14 +59,12 @@ export default function ProfileEditPage() {
   const watchedValues = watch()
 
   useEffect(() => {
-    // Load data from AuthContext or localStorage
-    const profileData = userProfile || JSON.parse(localStorage.getItem("profile") || "{}")
-    
-    if (profileData) {
-      // Reset form with saved data
-      Object.keys(profileData).forEach(key => {
-        if (key in profileData && key !== "documentHash" && key !== "userHash" && key !== "empId") {
-          setValue(key as keyof ProfileFormData, profileData[key])
+    // Load data from AuthContext only (no localStorage to prevent data leakage)
+    if (userProfile) {
+      // Reset form with saved data from API
+      Object.keys(userProfile).forEach(key => {
+        if (key in userProfile && key !== "documentHash" && key !== "userHash" && key !== "empId") {
+          setValue(key as keyof ProfileFormData, userProfile[key])
         }
       })
     }
@@ -214,7 +212,8 @@ export default function ProfileEditPage() {
   }
 
   const issueRecord = async () => {
-    const documentHash = localStorage.getItem("documentHash")
+    // Get document hash from current user's profile (not localStorage)
+    const documentHash = userProfile?.docHash
     const employeeId = credentials?.empId
     
     if (!documentHash || !employeeId) {
@@ -230,10 +229,9 @@ export default function ProfileEditPage() {
       setTxStatus(`Record issued successfully! Transaction: ${txHash}`)
       setMessage({ type: "success", text: "Record issued to blockchain successfully!" })
       
-      // Save mapping for verification demo
-      const records = JSON.parse(localStorage.getItem("blockchainRecords") || "{}")
-      records[employeeId] = documentHash
-      localStorage.setItem("blockchainRecords", JSON.stringify(records))
+      // Note: In production, this would be saved to backend database
+      // For demo purposes, we're not storing in localStorage to prevent data leakage
+      console.log(`Record issued: ${employeeId} -> ${documentHash}`)
     }, 2000)
   }
 
@@ -559,14 +557,14 @@ export default function ProfileEditPage() {
                       )}
                     </div>
 
-                    {localStorage.getItem("documentHash") && (
+                    {userProfile?.docHash && (
                       <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                         <div className="flex items-center mb-2">
                           <Hash className="h-4 w-4 text-green-600 mr-2" />
                           <span className="text-sm font-medium text-green-800">Document Hash Generated</span>
                         </div>
                         <code className="text-xs text-green-700 break-all block">
-                          {localStorage.getItem("documentHash")}
+                          {userProfile?.docHash}
                         </code>
                       </div>
                     )}
@@ -591,7 +589,7 @@ export default function ProfileEditPage() {
                       type="button"
                       variant="secondary"
                       onClick={issueRecord}
-                      disabled={!credentials?.empId || !localStorage.getItem("documentHash") || txStatus.includes("Issuing")}
+                      disabled={!credentials?.empId || !userProfile?.docHash || txStatus.includes("Issuing")}
                       className="w-full"
                     >
                       {txStatus.includes("Issuing") ? "Issuing to Blockchain..." : "Issue Record to Blockchain"}
