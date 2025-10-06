@@ -113,31 +113,43 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Media files - Cloudinary Configuration
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-# Cloudinary configuration
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='your_cloud_name'),
-    'API_KEY': config('CLOUDINARY_API_KEY', default='your_api_key'),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default='your_api_secret'),
-}
-
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name=config('CLOUDINARY_CLOUD_NAME', default='your_cloud_name'),
-    api_key=config('CLOUDINARY_API_KEY', default='your_api_key'),
-    api_secret=config('CLOUDINARY_API_SECRET', default='your_api_secret')
-)
-
-# Use Cloudinary for file storage
-# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Local media settings (temporarily using local storage for testing)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Media files - Cloudinary Configuration (Optional)
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    
+    # Cloudinary configuration
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='your_cloud_name'),
+        'API_KEY': config('CLOUDINARY_API_KEY', default='your_api_key'),
+        'API_SECRET': config('CLOUDINARY_API_SECRET', default='your_api_secret'),
+        'SECURE': True,
+        'STATICFILES_MANAGER': 'cloudinary_storage.storage.StaticHashedCloudinaryStorage',
+    }
+    
+    # Configure Cloudinary
+    cloudinary.config(
+        cloud_name=config('CLOUDINARY_CLOUD_NAME', default='your_cloud_name'),
+        api_key=config('CLOUDINARY_API_KEY', default='your_api_key'),
+        api_secret=config('CLOUDINARY_API_SECRET', default='your_api_secret')
+    )
+    
+    # Temporarily use local storage for testing
+    # DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    # Local media settings (temporarily using local storage)
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    print("✅ Cloudinary configured successfully")
+    
+except ImportError:
+    print("⚠️  Cloudinary not installed, using local storage")
+    # Local media settings (fallback)
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Production settings
 if not DEBUG:

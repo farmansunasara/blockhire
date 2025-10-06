@@ -32,7 +32,7 @@ class DocumentRecordSerializer(serializers.ModelSerializer):
     Serializer for document records.
     """
     file_size_mb = serializers.ReadOnlyField()
-    download_url = serializers.ReadOnlyField()
+    download_url = serializers.SerializerMethodField()
     user_name = serializers.SerializerMethodField()
     
     class Meta:
@@ -47,6 +47,15 @@ class DocumentRecordSerializer(serializers.ModelSerializer):
     def get_user_name(self, obj):
         """Get user's full name."""
         return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.email
+    
+    def get_download_url(self, obj):
+        """Get download URL for the document."""
+        try:
+            # Return the relative API endpoint URL instead of trying to access Cloudinary URL
+            return f"/api/documents/download/{obj.doc_hash}/"
+        except Exception:
+            # Fallback to relative path if there's any error
+            return f"/api/documents/download/{obj.doc_hash}/"
 
 
 class DocumentHistorySerializer(serializers.ModelSerializer):
@@ -54,7 +63,7 @@ class DocumentHistorySerializer(serializers.ModelSerializer):
     Serializer for document history.
     """
     file_size_mb = serializers.ReadOnlyField()
-    download_url = serializers.ReadOnlyField()
+    download_url = serializers.SerializerMethodField()
     
     class Meta:
         model = DocumentRecord
@@ -63,6 +72,15 @@ class DocumentHistorySerializer(serializers.ModelSerializer):
             'file_size_mb', 'is_original', 'storage_path', 'file_type',
             'download_url'
         ]
+    
+    def get_download_url(self, obj):
+        """Get download URL for the document."""
+        try:
+            # Return the relative API endpoint URL instead of trying to access Cloudinary URL
+            return f"/api/documents/download/{obj.doc_hash}/"
+        except Exception:
+            # Fallback to relative path if there's any error
+            return f"/api/documents/download/{obj.doc_hash}/"
 
 
 class DocumentAccessLogSerializer(serializers.ModelSerializer):
