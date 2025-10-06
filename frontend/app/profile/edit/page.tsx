@@ -245,8 +245,6 @@ export default function ProfileEditPage() {
       setTxStatus(`Record issued successfully! Transaction: ${txHash}`)
       setMessage({ type: "success", text: "Record issued to blockchain successfully!" })
       
-      // Note: In production, this would be saved to backend database
-      // For demo purposes, we're not storing in localStorage to prevent data leakage
       console.log(`Record issued: ${employeeId} -> ${documentHash}`)
     }, 2000)
   }

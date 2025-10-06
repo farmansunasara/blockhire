@@ -5,7 +5,6 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { UserCredentials, UserProfile } from "@/types/api"
 import { apiService } from "@/services/api"
 
-// Simple User type for demo mode
 interface User {
   email: string
   uid: string
@@ -38,16 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [credentials, setCredentials] = useState<UserCredentials | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Utility function to clear all user data from localStorage
-  const clearAllUserData = () => {
-    localStorage.removeItem("userProfile")
-    localStorage.removeItem("profile")
-    localStorage.removeItem("documentHistory")
-    localStorage.removeItem("documentHash")
-    localStorage.removeItem("userHash")
-    localStorage.removeItem("empId")
-    localStorage.removeItem("userCredentials")
-  }
 
   const loadUserProfile = async (user: User) => {
     try {
@@ -98,19 +87,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Check localStorage for existing user and tokens
-    const demoUser = localStorage.getItem("demoUser")
+    // Check localStorage for existing tokens
     const accessToken = localStorage.getItem("accessToken")
     
-    console.log("AuthContext useEffect - demoUser:", demoUser)
     console.log("AuthContext useEffect - accessToken:", accessToken ? "present" : "missing")
     
-    if (demoUser) {
-      const user = JSON.parse(demoUser) as User
-      console.log("Setting user from demoUser:", user)
-      setUser(user)
-      loadUserProfile(user)
-    } else if (accessToken) {
+    if (accessToken) {
       // Check if token is expired before using it
       if (isTokenExpired(accessToken)) {
         console.log("Access token is expired, clearing tokens")
@@ -166,8 +148,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("Starting login process for:", email)
       
-      // Clear any existing data first to prevent data leakage
-      clearAllUserData()
       
       console.log("Calling API service login...")
       const response = await apiService.login(email, password)
@@ -215,8 +195,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string) => {
     try {
-      // Clear any existing data first to prevent data leakage
-      clearAllUserData()
       
       const response = await apiService.register({
         email,
@@ -257,21 +235,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      console.log("AuthContext: Starting logout process")
       // Call logout API
       await apiService.logout()
+      console.log("AuthContext: Logout API call successful")
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("AuthContext: Logout error:", error)
     } finally {
+      console.log("AuthContext: Clearing localStorage and state")
       // Clear ALL localStorage data to prevent data leakage between users
-      clearAllUserData()
       localStorage.removeItem("accessToken")
       localStorage.removeItem("refreshToken")
-      localStorage.removeItem("demoUser")
+      localStorage.removeItem("userProfile")
+      localStorage.removeItem("profile")
+      localStorage.removeItem("documentHistory")
+      localStorage.removeItem("documentHash")
+      localStorage.removeItem("userHash")
+      localStorage.removeItem("empId")
+      localStorage.removeItem("userCredentials")
       
       // Clear all state
       setUser(null)
       setUserProfile(null)
       setCredentials(null)
+      console.log("AuthContext: Logout process completed")
     }
   }
 

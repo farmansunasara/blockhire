@@ -59,7 +59,7 @@ export default function ProfileInfoPage() {
       console.log("No profile data found in AuthContext")
     }
     
-    // Load document history from API (not localStorage to prevent data leakage)
+    // Load document history from API
     const loadDocumentHistory = async () => {
       try {
         console.log("Loading document history...")
@@ -183,16 +183,6 @@ export default function ProfileInfoPage() {
                   Edit Profile
                 </Button>
               </Link>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  localStorage.clear()
-                  window.location.reload()
-                }}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                Clear Demo Data
-              </Button>
             </div>
           </div>
 

@@ -14,7 +14,10 @@ export default function ProfileDropdown() {
 
   const handleLogout = async () => {
     try {
+      console.log("Logout button clicked")
+      setIsOpen(false) // Close dropdown immediately
       await logout()
+      console.log("Logout successful, redirecting to home")
       router.push("/")
     } catch (error) {
       console.error("Logout error:", error)
@@ -55,7 +58,7 @@ export default function ProfileDropdown() {
             {/* User Info Header */}
             <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
               <p className="text-sm font-semibold text-gray-900">
-                {user.displayName || "User"}
+                {user.email.split('@')[0] || "User"}
               </p>
               <p className="text-xs text-gray-600 truncate mt-1">
                 {user.email}
@@ -112,10 +115,12 @@ export default function ProfileDropdown() {
             <div className="border-t border-gray-200 my-1">
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-3 text-sm transition-all duration-200 border-l-2 border-transparent"
+                className="flex items-center w-full px-4 py-3 text-sm transition-all duration-200 border-l-2 border-transparent hover:bg-red-50 hover:text-red-800 hover:border-red-400 cursor-pointer"
                 style={{ 
                   color: '#dc2626', 
-                  backgroundColor: 'transparent'
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  outline: 'none'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#fef2f2'

@@ -318,18 +318,6 @@ class APIService {
     return this.request<IssuerAuthorization[]>('/issuer/authorized/')
   }
 
-  // Utility methods for demo mode
-  generateDemoCredentials(): UserCredentials {
-    const timestamp = Date.now()
-    const empId = `EMP${timestamp.toString().slice(-6)}`
-    const userHash = this.generateHashSync(`demo@example.com${empId}${timestamp}`)
-    
-    return {
-      userHash,
-      empId,
-      email: 'demo@example.com'
-    }
-  }
 
   private async generateHash(input: string): Promise<string> {
     // Use Web Crypto API for proper SHA-256 hashing
@@ -341,7 +329,7 @@ class APIService {
   }
 
   private generateHashSync(input: string): string {
-    // Fallback for demo mode - simple hash function
+    // Fallback hash function
     let hash = 0
     for (let i = 0; i < input.length; i++) {
       const char = input.charCodeAt(i)

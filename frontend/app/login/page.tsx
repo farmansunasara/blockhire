@@ -111,7 +111,7 @@ export default function LoginPage() {
     <Layout>
       <div className="container" style={{ maxWidth: "500px", margin: "4rem auto" }}>
         <div className="alert alert-info" style={{ marginBottom: "2rem" }}>
-          <strong>Demo Mode:</strong> Using localStorage for data persistence. Ready for Django backend integration.
+          Ready for Django backend integration.
         </div>
 
         <div className="card">

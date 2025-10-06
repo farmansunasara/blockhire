@@ -149,7 +149,7 @@ export default function HomePage() {
             >
               <p>Video/Illustration Placeholder</p>
               <p style={{ color: "#718096", marginTop: "1rem" }}>
-                Coming soon: Interactive demo showing the verification process
+                Coming soon: Interactive verification process
               </p>
             </div>
           </div>

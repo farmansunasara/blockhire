@@ -124,8 +124,9 @@ def logout_view(request):
     # Revoke all user tokens
     revoke_all_user_tokens(request.user)
     
-    # Django logout
-    logout(request)
+    # Django logout (using django.contrib.auth.logout)
+    from django.contrib.auth import logout as django_logout
+    django_logout(request)
     
     return Response({
         'success': True,
