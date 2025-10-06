@@ -11,7 +11,17 @@ const nextConfig = {
   },
   output: 'standalone',
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://blockhire-backend.onrender.com/api',
+    NEXT_PUBLIC_API_URL: 'http://127.0.0.1:8000/api',
+  },
+  // Disable file watching for config changes
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      }
+    }
+    return config
   },
 }
 

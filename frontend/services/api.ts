@@ -14,6 +14,17 @@ import {
 class APIService {
   private baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'
   
+  // Helper function to check if token is expired
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const exp = payload.exp * 1000 // Convert to milliseconds
+      return Date.now() >= exp
+    } catch {
+      return true // If we can't parse it, consider it expired
+    }
+  }
+
   private async request<T>(
     endpoint: string, 
     options: RequestInit = {}
@@ -22,10 +33,19 @@ class APIService {
       const url = `${this.baseURL}${endpoint}`
       
       // Get access token from localStorage
-      const accessToken = localStorage.getItem('accessToken')
-      console.log('API Request:', { url, accessToken: accessToken ? 'Present' : 'Missing' })
+      let accessToken = localStorage.getItem('accessToken')
       
-      const response = await fetch(url, {
+      // Check if token is expired before using it
+      if (accessToken && this.isTokenExpired(accessToken)) {
+        console.log('Access token is expired, clearing tokens')
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        accessToken = null
+      }
+      
+      console.log('API Request:', { url, accessToken: accessToken ? 'Present' : 'Missing', options })
+      
+      let response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
@@ -34,7 +54,28 @@ class APIService {
         ...options,
       })
 
+      // If token expired (401), try to refresh
+      if (response.status === 401 && accessToken) {
+        console.log('Token expired, attempting refresh...')
+        const refreshSuccess = await this.refreshAccessToken()
+        
+        if (refreshSuccess) {
+          // Retry the request with new token
+          accessToken = localStorage.getItem('accessToken')
+          response = await fetch(url, {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+              ...options.headers,
+            },
+            ...options,
+          })
+        }
+      }
+
+      console.log('API Response status:', response.status, response.statusText)
       const data = await response.json()
+      console.log('API Response data:', data)
       
       if (!response.ok) {
         console.error('API Response Error:', {
@@ -56,6 +97,43 @@ class APIService {
     }
   }
 
+  private async refreshAccessToken(): Promise<boolean> {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (!refreshToken) {
+        console.log('No refresh token available')
+        return false
+      }
+
+      const response = await fetch(`${this.baseURL}/auth/refresh/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          localStorage.setItem('accessToken', data.data.access)
+          console.log('Token refreshed successfully')
+          return true
+        }
+      }
+      
+      console.log('Token refresh failed, clearing tokens')
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      return false
+    } catch (error) {
+      console.error('Token refresh error:', error)
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      return false
+    }
+  }
+
   // Auth endpoints
   async register(data: RegistrationData): Promise<APIResponse<{ user: any, tokens: any }>> {
     // Convert confirmPassword to confirm_password for backend compatibility
@@ -72,10 +150,13 @@ class APIService {
   }
 
   async login(email: string, password: string): Promise<APIResponse<{ user: any, tokens: any }>> {
-    return this.request<{ user: any, tokens: any }>('/auth/login/', {
+    console.log('API Service: Login request for:', email)
+    const response = await this.request<{ user: any, tokens: any }>('/auth/login/', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
+    console.log('API Service: Login response:', response)
+    return response
   }
 
   async logout(): Promise<APIResponse<null>> {
@@ -86,13 +167,51 @@ class APIService {
 
   // Profile endpoints
   async getProfile(): Promise<APIResponse<UserProfile>> {
-    return this.request<UserProfile>('/profile/')
+    const response = await this.request<any>('/profile/')
+    
+    if (response.success && response.data) {
+      // Convert snake_case to camelCase for frontend compatibility
+      const profileData = {
+        ...response.data,
+        firstName: response.data.first_name,
+        lastName: response.data.last_name,
+        dateOfBirth: response.data.date_of_birth,
+        jobDesignation: response.data.job_designation,
+        docHash: response.data.doc_hash,
+        docHistory: response.data.doc_history || [],
+        storagePath: response.data.storage_path,
+        isProfileComplete: response.data.is_profile_complete,
+        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at,
+        // Add credential fields
+        userHash: response.data.user_hash,
+        empId: response.data.emp_id,
+      }
+      
+      return {
+        ...response,
+        data: profileData
+      }
+    }
+    
+    return response
   }
 
   async updateProfile(data: Partial<ProfileFormData>): Promise<APIResponse<UserProfile>> {
+    // Convert camelCase to snake_case for backend compatibility
+    const backendData = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      date_of_birth: data.dateOfBirth,
+      mobile: data.mobile,
+      address: data.address,
+      job_designation: data.jobDesignation,
+      department: data.department,
+    }
+    
     return this.request<UserProfile>('/profile/update/', {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(backendData),
     })
   }
 
@@ -119,7 +238,26 @@ class APIService {
   }
 
   async getDocumentHistory(): Promise<APIResponse<DocumentRecord[]>> {
-    return this.request<DocumentRecord[]>('/documents/history/')
+    const response = await this.request<any[]>('/documents/history/')
+    
+    if (response.success === false) {
+      return response as APIResponse<DocumentRecord[]>
+    }
+    
+    // Transform snake_case to camelCase for frontend compatibility
+    const transformedData = response.map((doc: any) => ({
+      docHash: doc.doc_hash,
+      uploadDate: doc.upload_date,
+      fileName: doc.file_name,
+      fileSize: doc.file_size,
+      isOriginal: doc.is_original,
+      storagePath: doc.storage_path
+    }))
+    
+    return {
+      success: true,
+      data: transformedData
+    }
   }
 
   async downloadDocument(docHash: string): Promise<APIResponse<Blob>> {
@@ -130,25 +268,43 @@ class APIService {
 
   // Verification endpoints
   async verifyDocument(request: VerificationRequest): Promise<APIResponse<VerificationResult>> {
+    // Convert camelCase to snake_case for backend compatibility
+    const backendData = {
+      emp_id: request.empId,
+      doc_hash: request.docHash,
+    }
+    
     return this.request<VerificationResult>('/verify/', {
       method: 'POST',
-      body: JSON.stringify(request),
+      body: JSON.stringify(backendData),
     })
   }
 
   // Issuer endpoints
   async authorizeEmployee(request: AuthorizationRequest): Promise<APIResponse<IssuerAuthorization>> {
+    // Convert camelCase to snake_case for backend compatibility
+    const backendData = {
+      emp_id: request.empId,
+      user_hash: request.userHash,
+    }
+    
     return this.request<IssuerAuthorization>('/issuer/authorize/', {
       method: 'POST',
-      body: JSON.stringify(request),
+      body: JSON.stringify(backendData),
     })
   }
 
   async getEmployeeDetails(request: AuthorizationRequest): Promise<APIResponse<UserProfile>> {
     try {
+      // Convert camelCase to snake_case for backend compatibility
+      const backendData = {
+        emp_id: request.empId,
+        user_hash: request.userHash,
+      }
+      
       return await this.request<UserProfile>('/issuer/employee-details/', {
         method: 'POST',
-        body: JSON.stringify(request),
+        body: JSON.stringify(backendData),
       })
     } catch (error) {
       return {

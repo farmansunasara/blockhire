@@ -21,19 +21,31 @@ export default function LoginPage() {
   const router = useRouter()
   const { user, login, register } = useAuth()
   
-  // Initialize validator
+  // Initialize validator - will be updated when tab changes
   const validator = new FormValidator()
-  validator.addRule('email', validationRules.email)
-  validator.addRule('password', validationRules.password)
-  validator.addRule('confirmPassword', {
-    ...validationRules.confirmPassword,
-    custom: (value: string) => {
-      if (activeTab === 'register' && value !== formData.password) {
-        return 'Passwords do not match'
-      }
-      return null
+  
+  // Update validator rules when tab changes
+  useEffect(() => {
+    validator.addRule('email', validationRules.email)
+    
+    if (activeTab === 'login') {
+      validator.addRule('password', {
+        required: true,
+        minLength: 1 // Just require non-empty for login
+      })
+    } else {
+      validator.addRule('password', validationRules.password)
+      validator.addRule('confirmPassword', {
+        ...validationRules.confirmPassword,
+        custom: (value: string) => {
+          if (activeTab === 'register' && value !== formData.password) {
+            return 'Passwords do not match'
+          }
+          return null
+        }
+      })
     }
-  })
+  }, [activeTab, formData.password])
 
   useEffect(() => {
     if (user) {
@@ -43,13 +55,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Form submitted, activeTab:", activeTab)
+    console.log("Form data:", formData)
+    
     setLoading(true)
     setMessage("")
     setErrors({})
 
     // Validate form
     const validation = validator.validate(formData)
+    console.log("Validation result:", validation)
+    
     if (!validation.isValid) {
+      console.log("Validation failed:", validation.errors)
       setErrors(validation.errors)
       setLoading(false)
       return
@@ -57,17 +75,21 @@ export default function LoginPage() {
 
     try {
       if (activeTab === "register") {
+        console.log("Attempting registration...")
         await register(formData.email, formData.password)
         setMessage("Registration successful!")
       } else {
+        console.log("Attempting login...")
         await login(formData.email, formData.password)
         setMessage("Login successful!")
       }
 
       setTimeout(() => {
-        router.push("/profile")
-      }, 1000)
+        console.log("Redirecting to profile/info...")
+        router.push("/profile/info")
+      }, 1500)
     } catch (error: any) {
+      console.error("Authentication error:", error)
       setMessage(error.message || "Authentication failed")
     } finally {
       setLoading(false)
@@ -163,7 +185,17 @@ export default function LoginPage() {
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ width: "100%" }} 
+              disabled={loading}
+              onClick={(e) => {
+                console.log("Button clicked!")
+                console.log("Loading state:", loading)
+                console.log("Active tab:", activeTab)
+              }}
+            >
               {loading && <span className="spinner"></span>}
               {activeTab === "login" ? "Login" : "Register"}
             </button>

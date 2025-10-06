@@ -30,6 +30,7 @@ import {
 import CredentialsDisplay from "@/components/CredentialsDisplay"
 import DocumentHistory from "@/components/DocumentHistory"
 import { UserProfile, DocumentRecord } from "@/types/api"
+import { apiService } from "@/services/api"
 
 // Remove duplicate interface - using imported one
 
@@ -44,6 +45,7 @@ export default function ProfileInfoPage() {
   console.log("ProfileInfoPage - userProfile:", userProfile)
   console.log("ProfileInfoPage - credentials:", credentials)
   console.log("ProfileInfoPage - loading:", loading)
+  console.log("ProfileInfoPage - documents:", documents)
 
   useEffect(() => {
     // Only run when AuthContext is done loading
@@ -60,7 +62,10 @@ export default function ProfileInfoPage() {
     // Load document history from API (not localStorage to prevent data leakage)
     const loadDocumentHistory = async () => {
       try {
+        console.log("Loading document history...")
         const response = await apiService.getDocumentHistory()
+        console.log("Document history response:", response)
+        
         if (response.success && response.data) {
           console.log("Loading documents from API:", response.data)
           setDocuments(response.data)
@@ -76,7 +81,10 @@ export default function ProfileInfoPage() {
     
     // Only load documents if user is authenticated
     if (user && !loading) {
+      console.log("User is authenticated, loading document history...")
       loadDocumentHistory()
+    } else {
+      console.log("User not authenticated or still loading:", { user, loading })
     }
   }, [userProfile, loading, user])
 

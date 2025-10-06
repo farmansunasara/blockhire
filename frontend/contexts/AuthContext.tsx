@@ -56,9 +56,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.success && response.data) {
         setUserProfile(response.data)
+        
+        // Set credentials from profile data
+        console.log("Profile data received:", response.data)
+        console.log("userHash:", response.data.userHash)
+        console.log("empId:", response.data.empId)
+        
+        if (response.data.userHash && response.data.empId) {
+          const credentialsData = {
+            userHash: response.data.userHash,
+            empId: response.data.empId,
+            email: response.data.email
+          }
+          console.log("Setting credentials:", credentialsData)
+          setCredentials(credentialsData)
+        } else {
+          console.log("Missing credential data - userHash or empId not found")
+        }
+      } else {
+        console.error("Failed to load profile:", response.error)
+        // If profile loading fails due to auth issues, clear tokens
+        if (response.error?.includes('Token') || response.error?.includes('Authentication')) {
+          localStorage.removeItem("accessToken")
+          localStorage.removeItem("refreshToken")
+        }
       }
     } catch (error) {
       console.error("Error loading user profile:", error)
+    }
+  }
+
+  // Helper function to check if token is expired
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const exp = payload.exp * 1000 // Convert to milliseconds
+      return Date.now() >= exp
+    } catch {
+      return true // If we can't parse it, consider it expired
     }
   }
 
@@ -67,14 +102,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const demoUser = localStorage.getItem("demoUser")
     const accessToken = localStorage.getItem("accessToken")
     
+    console.log("AuthContext useEffect - demoUser:", demoUser)
+    console.log("AuthContext useEffect - accessToken:", accessToken ? "present" : "missing")
+    
     if (demoUser) {
       const user = JSON.parse(demoUser) as User
+      console.log("Setting user from demoUser:", user)
       setUser(user)
       loadUserProfile(user)
     } else if (accessToken) {
-      // If we have a token but no demo user, try to load the profile
-      // This handles the case where the user logged in but the page was refreshed
+      // Check if token is expired before using it
+      if (isTokenExpired(accessToken)) {
+        console.log("Access token is expired, clearing tokens")
+        localStorage.removeItem("accessToken")
+        localStorage.removeItem("refreshToken")
+        setLoading(false)
+        return
+      }
+      
+      console.log("Loading profile from valid token...")
+      // If we have a valid token, try to load the profile
       apiService.getProfile().then(response => {
+        console.log("Profile response:", response)
         if (response.success && response.data) {
           setUserProfile(response.data)
           // Create a minimal user object
@@ -82,27 +131,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: response.data.email,
             uid: response.data.id?.toString() || 'unknown'
           }
+          console.log("Setting user from profile:", user)
           setUser(user)
+          
+          // Also set credentials from profile data
+          if (response.data.userHash && response.data.empId) {
+            const credentialsData = {
+              userHash: response.data.userHash,
+              empId: response.data.empId,
+              email: response.data.email
+            }
+            console.log("Setting credentials from profile:", credentialsData)
+            setCredentials(credentialsData)
+          }
+          setLoading(false)
+        } else {
+          console.log("Profile loading failed:", response.error)
+          setLoading(false)
         }
       }).catch(error => {
         console.error("Error loading profile from token:", error)
         // Clear invalid tokens
         localStorage.removeItem("accessToken")
         localStorage.removeItem("refreshToken")
+        setLoading(false)
       })
+    } else {
+      console.log("No authentication data found")
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("Starting login process for:", email)
+      
       // Clear any existing data first to prevent data leakage
       clearAllUserData()
       
+      console.log("Calling API service login...")
       const response = await apiService.login(email, password)
+      console.log("Login response:", response)
       
       if (response.success && response.data) {
         const { user: userData, tokens } = response.data
+        console.log("Login successful, user data:", userData)
+        console.log("Tokens:", tokens)
         
         // Store tokens
         localStorage.setItem("accessToken", tokens.access)
@@ -114,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           uid: userData.id.toString()
         }
         
+        console.log("Setting user:", user)
         setUser(user)
         setCredentials({
           userHash: userData.user_hash,
@@ -122,8 +197,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         
         // Load profile
+        console.log("Loading user profile...")
         await loadUserProfile(user)
+        console.log("Login process completed successfully")
+        
+        // Ensure loading is set to false after login
+        setLoading(false)
       } else {
+        console.error("Login failed:", response.error)
         throw new Error(response.error || "Login failed")
       }
     } catch (error) {
