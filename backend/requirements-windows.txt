@@ -1,0 +1,68 @@
+# ========================================
+# BlockHire - Windows-Specific Dependencies
+# ========================================
+# This file is optimized for Windows systems
+# Install with: pip install -r requirements-windows.txt
+
+# ========================================
+# CORE FRAMEWORK
+# ========================================
+Django==4.2.7
+djangorestframework==3.14.0
+
+# ========================================
+# SECURITY & AUTHENTICATION
+# ========================================
+django-cors-headers==4.3.1
+PyJWT==2.8.0
+
+# ========================================
+# DATABASE & STORAGE
+# ========================================
+# Use psycopg2-binary for Windows (pre-compiled)
+psycopg2-binary==2.9.7
+dj-database-url==2.1.0
+whitenoise==6.6.0
+
+# ========================================
+# FILE PROCESSING & MEDIA
+# ========================================
+Pillow==10.4.0
+
+# ========================================
+# CONFIGURATION & ENVIRONMENT
+# ========================================
+python-decouple==3.8
+
+# ========================================
+# API FEATURES & UTILITIES
+# ========================================
+django-filter==23.3
+django-ratelimit==4.1.0
+django-cleanup==9.0.0
+
+# ========================================
+# PRODUCTION SERVER
+# ========================================
+gunicorn==21.2.0
+
+# ========================================
+# DEVELOPMENT & TESTING
+# ========================================
+django-debug-toolbar==4.2.0
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# ========================================
+# MONITORING & UTILITIES
+# ========================================
+django-extensions==3.2.3
+
+# ========================================
+# WINDOWS-SPECIFIC NOTES
+# ========================================
+# If you get build errors, try:
+# 1. Install Visual C++ Build Tools: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+# 2. Or use: pip install --only-binary=all -r requirements-windows.txt
+# 3. For psycopg2 issues, try: pip install psycopg2-binary

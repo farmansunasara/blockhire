@@ -35,6 +35,10 @@ django-storages==1.14.2
 boto3==1.34.0
 google-cloud-storage==2.10.0
 
+# Cloudinary Storage (Recommended)
+cloudinary==1.36.0
+django-cloudinary-storage==0.3.0
+
 # File Processing
 python-magic==0.4.27
 
