@@ -179,7 +179,6 @@ def download_document(request, doc_hash):
         # Check if file exists in storage
         print(f"Checking if file exists: {document.storage_path}")
         print(f"File exists: {default_storage.exists(document.storage_path)}")
-        print(f"Storage location: {default_storage.location}")
         
         if not default_storage.exists(document.storage_path):
             print(f"File not found in storage: {document.storage_path}")
@@ -188,22 +187,21 @@ def download_document(request, doc_hash):
                 'error': 'File not found in storage'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Get file from storage
-        file = default_storage.open(document.storage_path, 'rb')
-        
-        # Create file response
-        response = FileResponse(
-            file,
-            content_type='application/octet-stream',
-            as_attachment=True,
-            filename=document.file_name
-        )
-        
-        # Set additional headers
-        response['Content-Length'] = document.file_size
-        response['Content-Disposition'] = f'attachment; filename="{document.file_name}"'
-        
-        return response
+        # For Cloudinary storage, redirect to the file URL
+        try:
+            file_url = default_storage.url(document.storage_path)
+            print(f"Redirecting to Cloudinary URL: {file_url}")
+            
+            # Redirect to Cloudinary URL
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(file_url)
+            
+        except Exception as e:
+            print(f"Error getting file URL: {e}")
+            return Response({
+                'success': False,
+                'error': f'Error accessing file: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     except DocumentRecord.DoesNotExist:
         return Response({
@@ -356,24 +354,21 @@ def preview_document(request, doc_hash):
                 'error': 'File not found in storage'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Get file from storage
-        file = default_storage.open(document.storage_path, 'rb')
-        
-        # Determine content type based on file type
-        content_type = 'application/pdf' if document.file_type.lower() == 'pdf' else 'application/octet-stream'
-        
-        # Create file response for preview
-        response = FileResponse(
-            file,
-            content_type=content_type,
-            as_attachment=False  # Preview, not download
-        )
-        
-        # Set additional headers
-        response['Content-Length'] = document.file_size
-        response['Content-Disposition'] = f'inline; filename="{document.file_name}"'
-        
-        return response
+        # For Cloudinary storage, redirect to the file URL for preview
+        try:
+            file_url = default_storage.url(document.storage_path)
+            print(f"Redirecting to Cloudinary URL for preview: {file_url}")
+            
+            # Redirect to Cloudinary URL
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(file_url)
+            
+        except Exception as e:
+            print(f"Error getting file URL: {e}")
+            return Response({
+                'success': False,
+                'error': f'Error accessing file: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     except DocumentRecord.DoesNotExist:
         return Response({

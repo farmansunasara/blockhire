@@ -135,13 +135,20 @@ try:
         api_secret=config('CLOUDINARY_API_SECRET', default='your_api_secret')
     )
     
-    # Temporarily use local storage for testing
-    # DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    # Use custom Cloudinary storage for document files
+    DEFAULT_FILE_STORAGE = 'documents.cloudinary_storage.DocumentCloudinaryStorage'
     
-    # Local media settings (temporarily using local storage)
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    # Configure Cloudinary to accept all file types
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='your_cloud_name'),
+        'API_KEY': config('CLOUDINARY_API_KEY', default='your_api_key'),
+        'API_SECRET': config('CLOUDINARY_API_SECRET', default='your_api_secret'),
+        'SECURE': True,
+        'STATICFILES_MANAGER': 'cloudinary_storage.storage.StaticHashedCloudinaryStorage',
+        # Allow all file types, not just images
+        'STATIC_IMAGES_EXTENSIONS': ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'doc', 'docx', 'txt', 'zip', 'rar'],
+        'STATIC_VIDEOS_EXTENSIONS': ['mp4', 'webm', 'ogv', 'avi', 'mov'],
+    }
     print("✅ Cloudinary configured successfully")
     
 except ImportError:

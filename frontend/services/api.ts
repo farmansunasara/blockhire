@@ -272,11 +272,28 @@ class APIService {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },
+        redirect: 'follow' // Follow redirects
       })
 
+      // Handle redirects to Cloudinary URLs
+      if (response.redirected && response.url.includes('cloudinary.com')) {
+        // Open the Cloudinary URL directly
+        window.open(response.url, '_blank')
+        return {
+          success: true,
+          data: null as any,
+          message: 'Document opened in new tab'
+        }
+      }
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Download failed')
+        // Try to parse error as JSON, but handle cases where it's not JSON
+        try {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Download failed')
+        } catch (jsonError) {
+          throw new Error(`Download failed: ${response.status} ${response.statusText}`)
+        }
       }
 
       const blob = await response.blob()
@@ -320,11 +337,23 @@ class APIService {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },
+        redirect: 'follow' // Follow redirects
       })
 
+      // Handle redirects to Cloudinary URLs
+      if (response.redirected && response.url.includes('cloudinary.com')) {
+        // Return the Cloudinary URL directly
+        return response.url
+      }
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Preview failed')
+        // Try to parse error as JSON, but handle cases where it's not JSON
+        try {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Preview failed')
+        } catch (jsonError) {
+          throw new Error(`Preview failed: ${response.status} ${response.statusText}`)
+        }
       }
 
       const blob = await response.blob()
