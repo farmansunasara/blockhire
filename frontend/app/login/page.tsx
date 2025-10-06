@@ -110,9 +110,9 @@ export default function LoginPage() {
   return (
     <Layout>
       <div className="container" style={{ maxWidth: "500px", margin: "4rem auto" }}>
-        <div className="alert alert-info" style={{ marginBottom: "2rem" }}>
+        {/* <div className="alert alert-info" style={{ marginBottom: "2rem" }}>
           Ready for Django backend integration.
-        </div>
+        </div> */}
 
         <div className="card">
           <div className="tabs">

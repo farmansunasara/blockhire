@@ -1,4 +1,4 @@
-﻿# BlockHire Production Dependencies
+# BlockHire Production Dependencies
 # Core Django Framework
 Django==4.2.7
 djangorestframework==3.14.0

@@ -308,7 +308,26 @@ export default function EmployeeLookup({
             
             {verificationResult.isValid && verificationResult.downloadLink && (
               <div className="mt-4">
-                <Button className="flex items-center">
+                <Button 
+                  className="flex items-center"
+                  onClick={async () => {
+                    try {
+                      // Extract docHash from downloadLink or use the prefilledDocHash
+                      const docHash = prefilledDocHash || verificationResult.downloadLink?.split('/').pop()
+                      if (docHash) {
+                        // Import and use the API service for proper authentication
+                        const { apiService } = await import('../services/api')
+                        const result = await apiService.downloadDocument(docHash)
+                        if (!result.success) {
+                          alert(`Download failed: ${result.error}`)
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Download error:', error)
+                      alert(`Download error: ${error}`)
+                    }
+                  }}
+                >
                   <Download className="mr-2 h-4 w-4" />
                   Download Document
                 </Button>

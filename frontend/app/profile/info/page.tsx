@@ -3,6 +3,7 @@
 import Layout from "../../../components/Layout"
 import ProtectedRoute from "../../../components/ProtectedRoute"
 import { useAuth } from "../../../contexts/AuthContext"
+import { apiService } from "../../../services/api"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -30,9 +31,6 @@ import {
 import CredentialsDisplay from "@/components/CredentialsDisplay"
 import DocumentHistory from "@/components/DocumentHistory"
 import { UserProfile, DocumentRecord } from "@/types/api"
-import { apiService } from "@/services/api"
-
-// Remove duplicate interface - using imported one
 
 export default function ProfileInfoPage() {
   const { user, userProfile, credentials, loading } = useAuth()
@@ -227,13 +225,30 @@ export default function ProfileInfoPage() {
               {/* Document History Section */}
               <DocumentHistory
                 documents={documents}
-                onDownload={(docHash) => {
-                  // TODO: Implement download functionality
-                  console.log("Download document:", docHash)
+                onDownload={async (docHash) => {
+                  try {
+                    console.log("Download document:", docHash)
+                    const result = await apiService.downloadDocument(docHash)
+                    if (result.success) {
+                      console.log("Download completed successfully")
+                    } else {
+                      console.error("Download failed:", result.error)
+                      alert(`Download failed: ${result.error}`)
+                    }
+                  } catch (error) {
+                    console.error("Download error:", error)
+                    alert(`Download error: ${error}`)
+                  }
                 }}
-                onView={(docHash) => {
-                  // TODO: Implement view functionality
-                  console.log("View document:", docHash)
+                onView={async (docHash) => {
+                  try {
+                    console.log("View document:", docHash)
+                    const previewUrl = await apiService.previewDocument(docHash)
+                    window.open(previewUrl, '_blank')
+                  } catch (error) {
+                    console.error("Preview error:", error)
+                    alert(`Preview failed: ${error}`)
+                  }
                 }}
                 isLoading={false}
               />

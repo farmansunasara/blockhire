@@ -9,6 +9,7 @@ urlpatterns = [
     path('history/', views.document_history, name='document_history'),
     path('hashes/', views.document_hashes, name='document_hashes'),
     path('download/<str:doc_hash>/', views.download_document, name='download_document'),
+    path('preview/<str:doc_hash>/', views.preview_document, name='preview_document'),
     path('details/<str:doc_hash>/', views.document_details, name='document_details'),
     path('delete/<str:doc_hash>/', views.delete_document, name='delete_document'),
     path('access-logs/<str:doc_hash>/', views.access_logs, name='access_logs'),
