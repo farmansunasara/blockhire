@@ -6,7 +6,7 @@ from rest_framework.permissions import BasePermission
 
 class AllowAnyPermission(BasePermission):
     """
-    Allow any request - no authentication required.
+    Allow any request - used for public endpoints.
     """
     def has_permission(self, request, view):
         return True

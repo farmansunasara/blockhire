@@ -143,9 +143,17 @@ def refresh_token(request):
     
     if serializer.is_valid():
         tokens = serializer.validated_data['refresh']
-        return Response(tokens, status=status.HTTP_200_OK)
+        return Response({
+            'success': True,
+            'data': tokens,
+            'message': 'Token refreshed successfully'
+        }, status=status.HTTP_200_OK)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'success': False,
+        'error': 'Token refresh failed',
+        'details': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

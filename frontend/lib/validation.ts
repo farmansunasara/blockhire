@@ -152,11 +152,31 @@ export const validationRules = {
   
   mobile: {
     required: true,
-    pattern: /^[\+]?[1-9][\d]{0,15}$/,
+    pattern: /^[\+]?[1-9][\d]{9,14}$/,
     custom: (value: string) => {
-      const cleaned = value.replace(/[\s\-\(\)]/g, '')
-      if (cleaned.length < 10) return 'Mobile number must be at least 10 digits'
-      if (cleaned.length > 15) return 'Mobile number cannot exceed 15 digits'
+      // Remove all non-digit characters except +
+      const cleaned = value.replace(/[^\d+]/g, '')
+      
+      // Check if it starts with + (international format)
+      if (cleaned.startsWith('+')) {
+        // International format: +1234567890 (10-15 digits after +)
+        const digits = cleaned.substring(1)
+        if (digits.length < 10) return 'International mobile number must be at least 10 digits'
+        if (digits.length > 15) return 'International mobile number cannot exceed 15 digits'
+        if (!/^[1-9]/.test(digits)) return 'Mobile number cannot start with 0'
+      } else {
+        // Local format: 1234567890 (10-15 digits)
+        if (cleaned.length < 10) return 'Mobile number must be at least 10 digits'
+        if (cleaned.length > 15) return 'Mobile number cannot exceed 15 digits'
+        if (!/^[1-9]/.test(cleaned)) return 'Mobile number cannot start with 0'
+      }
+      
+      // Check for valid mobile number patterns
+      const phoneRegex = /^[\+]?[1-9][\d]{9,14}$/
+      if (!phoneRegex.test(cleaned)) {
+        return 'Please enter a valid mobile number'
+      }
+      
       return null
     }
   },

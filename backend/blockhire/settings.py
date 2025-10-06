@@ -193,8 +193,8 @@ CORS_ALLOWED_METHODS = [
 
 # JWT Settings
 JWT_SECRET_KEY = config('JWT_SECRET_KEY', default=SECRET_KEY)
-JWT_ACCESS_TOKEN_LIFETIME = config('JWT_ACCESS_TOKEN_LIFETIME', default=3600, cast=int)
-JWT_REFRESH_TOKEN_LIFETIME = config('JWT_REFRESH_TOKEN_LIFETIME', default=86400, cast=int)
+JWT_ACCESS_TOKEN_LIFETIME = config('JWT_ACCESS_TOKEN_LIFETIME', default=3600, cast=int)  # 1 hour for development
+JWT_REFRESH_TOKEN_LIFETIME = config('JWT_REFRESH_TOKEN_LIFETIME', default=604800, cast=int)  # 7 days
 
 # File Upload Settings
 MAX_FILE_SIZE = config('MAX_FILE_SIZE', default=10485760, cast=int)  # 10MB

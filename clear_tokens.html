@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear BlockHire Tokens</title>
+</head>
+<body>
+    <h1>Clear BlockHire Tokens</h1>
+    <p>This will clear all stored tokens from localStorage.</p>
+    <button onclick="clearTokens()">Clear All Tokens</button>
+    <div id="result"></div>
+
+    <script>
+        function clearTokens() {
+            try {
+                // Clear all BlockHire related localStorage items
+                const itemsToRemove = [
+                    'accessToken',
+                    'refreshToken',
+                    'userProfile',
+                    'profile',
+                    'documentHistory',
+                    'documentHash',
+                    'userHash',
+                    'empId',
+                    'userCredentials',
+                    'demoUser'
+                ];
+                
+                itemsToRemove.forEach(item => {
+                    localStorage.removeItem(item);
+                });
+                
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: green;">✅ All tokens cleared successfully!</p>' +
+                    '<p>You can now close this tab and go back to your app.</p>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: red;">❌ Error clearing tokens: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
+

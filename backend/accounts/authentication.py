@@ -65,13 +65,17 @@ class JWTAuthentication(BaseAuthentication):
             
         except jwt.ExpiredSignatureError:
             print("JWT Auth - Token expired")
-            raise AuthenticationFailed('Token has expired')
+            # For expired tokens, return None instead of raising exception
+            # This allows the view to handle the case where no authentication is required
+            return None
         except jwt.InvalidTokenError:
             print("JWT Auth - Invalid token")
-            raise AuthenticationFailed('Invalid token')
+            # For invalid tokens, return None instead of raising exception
+            return None
         except Exception as e:
             print(f"JWT Auth - Exception: {str(e)}")
-            raise AuthenticationFailed(f'Authentication failed: {str(e)}')
+            # For other exceptions, return None instead of raising exception
+            return None
 
 
 def generate_tokens(user):
@@ -113,10 +117,11 @@ def generate_tokens(user):
     )
     
     # Store refresh token in database
+    from django.utils import timezone as django_timezone
     JWTToken.objects.create(
         user=user,
         token=refresh_token,
-        expires_at=now + timedelta(seconds=settings.JWT_REFRESH_TOKEN_LIFETIME)
+        expires_at=django_timezone.now() + timedelta(seconds=settings.JWT_REFRESH_TOKEN_LIFETIME)
     )
     
     return {

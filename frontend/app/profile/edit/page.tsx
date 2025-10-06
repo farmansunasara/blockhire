@@ -20,13 +20,26 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, AlertCircle, Upload, FileText, Hash, Eye, EyeOff } from "lucide-react"
 import { validateFile } from "../../../lib/validation"
+import { MobileInput } from "@/components/ui/mobile-input"
 
 // Validation schema
 const profileSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+  mobile: z.string()
+    .min(10, "Mobile number must be at least 10 digits")
+    .max(15, "Mobile number cannot exceed 15 digits")
+    .regex(/^[\+]?[1-9][\d]{9,14}$/, "Please enter a valid mobile number")
+    .refine((value) => {
+      const cleaned = value.replace(/[^\d+]/g, '')
+      if (cleaned.startsWith('+')) {
+        const digits = cleaned.substring(1)
+        return digits.length >= 10 && digits.length <= 15 && /^[1-9]/.test(digits)
+      } else {
+        return cleaned.length >= 10 && cleaned.length <= 15 && /^[1-9]/.test(cleaned)
+      }
+    }, "Mobile number format is invalid"),
   address: z.string().min(10, "Address must be at least 10 characters"),
   jobDesignation: z.string().min(2, "Job designation is required"),
   department: z.string().min(2, "Department is required"),
@@ -374,18 +387,14 @@ export default function ProfileEditPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="mobile">Mobile Number *</Label>
-                    <Input
-                      id="mobile"
-                      {...form.register("mobile")}
-                      className={errors.mobile ? "border-red-500" : ""}
-                      placeholder="Enter your mobile number"
-                    />
-                    {errors.mobile && (
-                      <p className="text-red-500 text-sm mt-1">{errors.mobile.message}</p>
-                    )}
-                  </div>
+                  <MobileInput
+                    id="mobile"
+                    label="Mobile Number *"
+                    {...form.register("mobile")}
+                    error={errors.mobile?.message}
+                    helperText="Enter your mobile number (10-15 digits). International format supported (+1234567890)"
+                    onValueChange={(value) => form.setValue("mobile", value)}
+                  />
 
                   {/* Email Display (Read-only) */}
                   {credentials && (

@@ -39,11 +39,19 @@ def update_profile(request):
     """
     Update current user's profile.
     """
+    print(f"Profile update request data: {request.data}")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
+    
     try:
         profile = request.user.profile
+        print(f"Found profile: {profile}")
+        
         serializer = UserProfileUpdateSerializer(profile, data=request.data)
+        print(f"Serializer data: {serializer.initial_data}")
         
         if serializer.is_valid():
+            print("Serializer is valid, saving...")
             serializer.save()
             # Return updated profile with full structure
             profile_serializer = UserProfileSerializer(profile)
@@ -53,6 +61,7 @@ def update_profile(request):
                 'message': 'Profile updated successfully'
             }, status=status.HTTP_200_OK)
         
+        print(f"Serializer validation errors: {serializer.errors}")
         return Response({
             'success': False,
             'error': 'Validation failed',
@@ -60,10 +69,17 @@ def update_profile(request):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     except UserProfile.DoesNotExist:
+        print("Profile not found")
         return Response({
             'success': False,
             'error': 'Profile not found'
         }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return Response({
+            'success': False,
+            'error': f'Unexpected error: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

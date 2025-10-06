@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from .models import DocumentRecord, DocumentAccessLog
+from accounts.models import UserProfile
 from .serializers import (
     DocumentUploadSerializer, DocumentRecordSerializer,
     DocumentHistorySerializer, DocumentAccessLogSerializer
@@ -28,14 +29,61 @@ class DocumentUploadView(APIView):
         """
         Upload a new document.
         """
+        print(f"Document upload request data: {request.data}")
+        print(f"Request files: {request.FILES}")
+        print(f"Request method: {request.method}")
+        
         serializer = DocumentUploadSerializer(
             data=request.data,
             context={'request': request}
         )
         
+        print(f"Serializer data: {serializer.initial_data}")
+        print(f"Serializer is valid: {serializer.is_valid()}")
+        if not serializer.is_valid():
+            print(f"Serializer errors: {serializer.errors}")
+        
         if serializer.is_valid():
             try:
-                document = serializer.save()
+                # Get the uploaded file
+                uploaded_file = serializer.validated_data['file']
+                
+                # Generate document hash from file content
+                import hashlib
+                file_content = uploaded_file.read()
+                doc_hash = hashlib.sha256(file_content).hexdigest()
+                
+                # Reset file pointer
+                uploaded_file.seek(0)
+                
+                # Create document record
+                document = DocumentRecord.objects.create(
+                    user=request.user,
+                    doc_hash=doc_hash,
+                    file_name=uploaded_file.name,
+                    file_size=uploaded_file.size,
+                    storage_path=f"documents/{request.user.emp_id}/{uploaded_file.name}",
+                    file_type=uploaded_file.content_type.split('/')[-1],
+                    upload_ip=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
+                
+                # Update user profile with document hash
+                try:
+                    profile = request.user.profile
+                    if not profile.doc_hash:  # First document becomes original
+                        profile.doc_hash = doc_hash
+                        profile.storage_path = document.storage_path
+                        document.is_original = True
+                        document.save()
+                    
+                    # Add to document history
+                    if doc_hash not in profile.doc_history:
+                        profile.doc_history.append(doc_hash)
+                        profile.save()
+                        
+                except Exception as e:
+                    print(f"Error updating profile: {e}")
                 
                 # Log access
                 DocumentAccessLog.objects.create(

@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('accounts.urls')),  # This includes the test endpoint
     path('api/auth/', include('accounts.urls')),
     path('api/profile/', include('profiles.urls')),
     path('api/documents/', include('documents.urls')),

@@ -11,11 +11,11 @@ class IssuerSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Issuer
-        fields = (
+        fields = [
             'id', 'issuer_id', 'name', 'email', 'company',
             'is_active', 'created_at', 'updated_at'
-        )
-        read_only_fields = ('id', 'issuer_id', 'created_at', 'updated_at')
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class IssuerAuthorizationSerializer(serializers.ModelSerializer):
@@ -27,45 +27,32 @@ class IssuerAuthorizationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = IssuerAuthorization
-        fields = (
+        fields = [
             'id', 'issuer', 'issuer_name', 'emp_id', 'user_hash',
             'employee', 'employee_name', 'status', 'permission_granted',
             'granted_at', 'revoked_at', 'reason', 'created_at', 'updated_at'
-        )
-        read_only_fields = (
-            'id', 'issuer_name', 'employee_name', 'granted_at',
-            'revoked_at', 'created_at', 'updated_at'
-        )
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
     
     def get_employee_name(self, obj):
+        """Get employee's full name."""
         if obj.employee:
-            return f"{obj.employee.first_name} {obj.employee.last_name}"
-        return "Unknown"
+            return f"{obj.employee.first_name} {obj.employee.last_name}".strip() or obj.employee.email
+        return None
 
 
 class IssuerAuthorizationRequestSerializer(serializers.Serializer):
     """
     Serializer for authorization requests.
     """
-    # Accept both camelCase and snake_case for frontend compatibility
-    empId = serializers.CharField(max_length=20, source='emp_id')
-    userHash = serializers.CharField(max_length=64, source='user_hash')
-    reason = serializers.CharField(required=False, allow_blank=True)
+    emp_id = serializers.CharField(max_length=20)
+    user_hash = serializers.CharField(max_length=64)
+    reason = serializers.CharField(max_length=500, required=False, allow_blank=True)
     
-    def validate_empId(self, value):
-        """
-        Validate employee ID format.
-        """
+    def validate_emp_id(self, value):
+        """Validate employee ID format."""
         if not value.startswith('EMP'):
-            raise serializers.ValidationError("Invalid employee ID format")
-        return value
-    
-    def validate_userHash(self, value):
-        """
-        Validate user hash format.
-        """
-        if len(value) != 64:
-            raise serializers.ValidationError("Invalid user hash format")
+            raise serializers.ValidationError("Employee ID must start with 'EMP'")
         return value
 
 
@@ -75,11 +62,10 @@ class IssuerAccessLogSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = IssuerAccessLog
-        fields = (
+        fields = [
             'id', 'action', 'emp_id', 'user_hash', 'doc_hash',
-            'details', 'ip_address', 'timestamp'
-        )
-        read_only_fields = ('id', 'timestamp')
+            'details', 'ip_address', 'user_agent', 'timestamp'
+        ]
 
 
 class IssuerSettingsSerializer(serializers.ModelSerializer):
@@ -88,24 +74,24 @@ class IssuerSettingsSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = IssuerSettings
-        fields = (
-            'id', 'max_authorizations', 'auto_approve',
-            'require_verification', 'notification_email', 'settings_json'
-        )
+        fields = [
+            'id', 'max_authorizations', 'auto_approve', 'require_verification',
+            'notification_email', 'settings_json'
+        ]
 
 
 class EmployeeDetailsSerializer(serializers.Serializer):
     """
     Serializer for employee details response.
     """
-    emp_id = serializers.CharField()
-    user_hash = serializers.CharField()
+    empId = serializers.CharField()
+    userHash = serializers.CharField()
     email = serializers.EmailField()
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    job_designation = serializers.CharField()
+    firstName = serializers.CharField()
+    lastName = serializers.CharField()
+    jobDesignation = serializers.CharField()
     department = serializers.CharField()
-    is_profile_complete = serializers.BooleanField()
-    has_original_document = serializers.BooleanField()
-    created_at = serializers.DateTimeField()
-    updated_at = serializers.DateTimeField()
+    isProfileComplete = serializers.BooleanField()
+    hasOriginalDocument = serializers.BooleanField()
+    createdAt = serializers.DateTimeField()
+    updatedAt = serializers.DateTimeField()
